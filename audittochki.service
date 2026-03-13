@@ -1,0 +1,20 @@
+[Unit]
+Description=AuditTochki Next.js App
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/audittochki
+EnvironmentFile=/opt/audittochki/.env
+ExecStart=/usr/bin/node /opt/audittochki/node_modules/.bin/next start -p 3000
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Memory limit — keep room for ClaudeClaw
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target
