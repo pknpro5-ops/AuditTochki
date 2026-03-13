@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Audit {
+  id        String   @id @default(cuid())
+
+  // Form data stored as JSON string (30 fields, validated by Zod)
+  formData  String   // JSON
+
+  // Floor plan
+  floorPlanPath    String?
+  floorPlanName    String?
+  floorPlanExpiresAt DateTime?
+
+  // OCR extracted data from floor plan
+  ocrData   String?  // JSON
+
+  // AI analysis result
+  report    String?  // JSON
+  verdict   String?  // GO | GO_WITH_RESERVATIONS | NO_GO
+
+  // Status tracking
+  status    String   @default("PENDING") // PENDING | PROCESSING_OCR | PROCESSING_AI | COMPLETED | FAILED
+  tier      String   @default("FREE")    // FREE | STANDARD | EXTENDED
+
+  // Timing
+  analysisStartedAt   DateTime?
+  analysisCompletedAt  DateTime?
+
+  // Contact
+  email     String?
+
+  // Session tracking (anonymous)
+  sessionId String
+
+  // User (optional — linked when user registers/logs in)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  payment   Payment?
+
+  @@index([sessionId])
+  @@index([status])
+  @@index([userId])
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  auditId     String   @unique
+  audit       Audit    @relation(fields: [auditId], references: [id])
+
+  // YooKassa
+  yookassaId  String?  @unique
+  amount      Int      // kopecks
+  currency    String   @default("RUB")
+  status      String   @default("PENDING") // PENDING | SUCCEEDED | CANCELED | REFUNDED
+  tier        String   // STANDARD | EXTENDED
+
+  paidAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         String   @default("USER") // USER | ADMIN
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  audits       Audit[]
+}
+
+model FreeUsage {
+  id         String   @id @default(cuid())
+  sessionId  String   @unique
+  usageCount Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([sessionId])
+}
