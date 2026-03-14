@@ -301,7 +301,7 @@ export default function HomePage() {
             ))}
           </div>
           <div className="mt-6">
-            <Link href="/compare" className="text-sm text-[var(--primary)] hover:underline font-medium">
+            <Link href="/pricing" className="text-sm text-[var(--primary)] hover:underline font-medium">
               Подробное сравнение тарифов &rarr;
             </Link>
           </div>

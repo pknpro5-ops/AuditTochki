@@ -28,7 +28,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-[var(--muted-foreground)]">
               <li><Link href="/audit" className="hover:text-[var(--foreground)] transition-colors">Проверить помещение</Link></li>
               <li><Link href="/pricing" className="hover:text-[var(--foreground)] transition-colors">Тарифы</Link></li>
-              <li><Link href="/compare" className="hover:text-[var(--foreground)] transition-colors">Сравнить тарифы</Link></li>
+              <li><Link href="/pricing" className="hover:text-[var(--foreground)] transition-colors">Сравнить тарифы</Link></li>
             </ul>
           </div>
 
