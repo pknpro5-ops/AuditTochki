@@ -6,6 +6,7 @@ import { Footer } from '@/components/layout/Footer'
 import { ToastProvider } from '@/components/ui/Toast'
 import { CookieBanner } from '@/components/layout/CookieBanner'
 import { YandexMetrika } from '@/components/layout/YandexMetrika'
+import { ChatWidget } from '@/components/chat/ChatWidget'
 
 const inter = Inter({
   subsets: ['latin', 'cyrillic'],
@@ -149,6 +150,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <CookieBanner />
+          <ChatWidget />
           <YandexMetrika />
         </ToastProvider>
       </body>

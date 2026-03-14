@@ -82,4 +82,6 @@ export const RATE_LIMITS = {
   authLogin: { windowMs: 60 * 1000, maxRequests: 5 },
   // Auth register: 3 per minute per IP
   authRegister: { windowMs: 60 * 1000, maxRequests: 3 },
+  // Chat: 20 per minute per IP
+  chat: { windowMs: 60 * 1000, maxRequests: 20 },
 }

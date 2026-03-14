@@ -214,6 +214,150 @@ export async function analyzeWithGemini(
   return callGemini(systemPrompt, userPrompt)
 }
 
+// ========== Chat-specific functions (text mode, multi-turn) ==========
+
+export interface ChatMessage {
+  role: 'user' | 'model'
+  text: string
+}
+
+async function callGeminiChat(
+  model: string,
+  systemPrompt: string,
+  messages: ChatMessage[],
+  apiKey: string
+): Promise<string> {
+  const contents = messages.map((msg) => ({
+    role: msg.role,
+    parts: [{ text: msg.text }],
+  }))
+
+  const body = {
+    system_instruction: {
+      parts: [{ text: systemPrompt }],
+    },
+    contents,
+    generationConfig: {
+      temperature: 0.3,
+      maxOutputTokens: 2048,
+      responseMimeType: 'text/plain',
+    },
+  }
+
+  const url = `${GEMINI_BASE_URL}/${model}:generateContent?key=${apiKey}`
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`Gemini Chat error ${response.status} (${model}): ${errorText.slice(0, 200)}`)
+  }
+
+  const data = (await response.json()) as GeminiResponse
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text
+
+  if (!text) {
+    throw new Error(`No chat response from Gemini (${model})`)
+  }
+
+  return text
+}
+
+async function callOpenRouterChat(
+  systemPrompt: string,
+  messages: ChatMessage[],
+  apiKey: string
+): Promise<string> {
+  for (const model of OPENROUTER_MODELS) {
+    try {
+      const orMessages: Array<Record<string, unknown>> = [
+        { role: 'system', content: systemPrompt },
+        ...messages.map((msg) => ({
+          role: msg.role === 'model' ? 'assistant' : 'user',
+          content: msg.text,
+        })),
+      ]
+
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': 'https://audittochki.ru',
+          'X-Title': 'AuditTochki Chat',
+        },
+        body: JSON.stringify({
+          model,
+          messages: orMessages,
+          temperature: 0.3,
+          max_tokens: 2048,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`OpenRouter Chat error ${response.status} (${model}): ${errorText.slice(0, 200)}`)
+      }
+
+      const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> }
+      const text = data.choices?.[0]?.message?.content
+
+      if (!text) {
+        throw new Error(`No chat response from OpenRouter (${model})`)
+      }
+
+      return text
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error))
+      console.warn(`OpenRouter Chat ${model} failed: ${err.message.slice(0, 100)}`)
+      continue
+    }
+  }
+
+  throw new Error('All OpenRouter chat models failed')
+}
+
+export async function chatWithGemini(
+  systemPrompt: string,
+  messages: ChatMessage[]
+): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY
+  const openRouterKey = process.env.OPENROUTER_API_KEY
+
+  if (!apiKey && !openRouterKey) {
+    throw new Error('Neither GEMINI_API_KEY nor OPENROUTER_API_KEY configured')
+  }
+
+  let lastError: Error | null = null
+
+  // 1. Try Gemini direct API
+  if (apiKey) {
+    for (const model of GEMINI_MODELS) {
+      try {
+        return await callGeminiChat(model, systemPrompt, messages, apiKey)
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error))
+        continue
+      }
+    }
+  }
+
+  // 2. Fallback to OpenRouter
+  if (openRouterKey) {
+    try {
+      return await callOpenRouterChat(systemPrompt, messages, openRouterKey)
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error))
+    }
+  }
+
+  throw lastError || new Error('All chat AI models failed')
+}
+
 export async function ocrFloorPlan(filePath: string): Promise<Record<string, unknown> | null> {
   try {
     const fileBuffer = await readFile(filePath)
