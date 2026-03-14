@@ -15,9 +15,6 @@ interface StepProps {
 export function StepLocation({ data, onChange, errors }: StepProps) {
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Блок 5. Локация и состояние</h2>
-      <p className="text-sm text-[var(--muted-foreground)]">Информация о расположении и текущем состоянии помещения</p>
-
       <FieldTooltip label="Адрес помещения" tooltip="Точный адрес поможет учесть требования конкретного района — зоны ограничений, близость к школам и т.д.">
         <input
           type="text"

@@ -15,9 +15,6 @@ interface StepProps {
 export function StepAdditionalEngineering({ data, onChange, errors }: StepProps) {
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Блок 6. Дополнительные инженерные</h2>
-      <p className="text-sm text-[var(--muted-foreground)]">Кондиционирование, санузлы и связь</p>
-
       <FieldTooltip label="Кондиционирование" tooltip="Кондиционирование обязательно в зале. Установка сплит-систем может быть ограничена фасадными правилами.">
         <select
           value={data.airConditioning || 'unknown'}

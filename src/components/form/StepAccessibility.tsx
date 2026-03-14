@@ -15,9 +15,6 @@ interface StepProps {
 export function StepAccessibility({ data, onChange, errors }: StepProps) {
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Блок 7. Доступность и логистика</h2>
-      <p className="text-sm text-[var(--muted-foreground)]">Парковка, доступ для МГН и зона разгрузки</p>
-
       <FieldTooltip label="Парковка" tooltip="Наличие парковки влияет на проходимость и удобство для гостей. Важно для ресторанов и заведений с доставкой.">
         <select
           value={data.parkingType || 'unknown'}

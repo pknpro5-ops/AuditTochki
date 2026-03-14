@@ -1,13 +1,9 @@
 'use client'
 
 const steps = [
-  { label: 'Базовые параметры', short: 'Базовые' },
-  { label: 'Инженерные коммуникации', short: 'Инженерные' },
-  { label: 'Конструктив', short: 'Конструктив' },
-  { label: 'Концепция и юридика', short: 'Концепция' },
-  { label: 'Локация и состояние', short: 'Локация' },
-  { label: 'Доп. инженерные', short: 'Доп. инж.' },
-  { label: 'Доступность', short: 'Доступность' },
+  { label: 'Помещение', short: 'Помещение' },
+  { label: 'Инженерные системы', short: 'Инженерия' },
+  { label: 'Концепция и расположение', short: 'Концепция' },
   { label: 'Проверка', short: 'Проверка' },
 ]
 
@@ -40,8 +36,8 @@ export function FormProgress({ currentStep, onStepClick, completedSteps }: FormP
         </div>
         <div className="flex items-center justify-between text-xs text-[var(--muted-foreground)]">
           <span>{progressPercent}% завершено</span>
-          {currentStep < 7 && (
-            <span>~{Math.max(1, Math.ceil((steps.length - currentStep - 1) * 0.3))} мин до конца</span>
+          {currentStep < steps.length - 1 && (
+            <span>~{Math.max(1, Math.ceil((steps.length - currentStep - 1) * 0.5))} мин до конца</span>
           )}
         </div>
       </div>
@@ -58,10 +54,10 @@ export function FormProgress({ currentStep, onStepClick, completedSteps }: FormP
               <button
                 onClick={() => isClickable && onStepClick(index)}
                 disabled={!isClickable}
-                className={`flex items-center gap-1 shrink-0 ${isClickable ? 'cursor-pointer' : 'cursor-not-allowed'} group`}
+                className={`flex items-center gap-2 shrink-0 ${isClickable ? 'cursor-pointer' : 'cursor-not-allowed'} group`}
               >
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-300 ${
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ${
                     isActive
                       ? 'bg-[var(--primary)] text-[var(--primary-foreground)] shadow-md shadow-[var(--primary)]/30 scale-110'
                       : isCompleted
@@ -70,19 +66,19 @@ export function FormProgress({ currentStep, onStepClick, completedSteps }: FormP
                   }`}
                 >
                   {isCompleted ? (
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
                   ) : index + 1}
                 </div>
-                <span className={`hidden lg:block text-xs transition-colors truncate max-w-[70px] ${
+                <span className={`text-sm transition-colors truncate ${
                   isActive ? 'font-semibold text-[var(--foreground)]' : 'text-[var(--muted-foreground)] group-hover:text-[var(--foreground)]'
                 }`}>
                   {step.short}
                 </span>
               </button>
               {index < steps.length - 1 && (
-                <div className={`flex-1 h-0.5 mx-1 rounded-full transition-colors duration-300 min-w-[8px] ${isCompleted ? 'bg-green-500' : 'bg-[var(--border)]'}`} />
+                <div className={`flex-1 h-0.5 mx-3 rounded-full transition-colors duration-300 min-w-[20px] ${isCompleted ? 'bg-green-500' : 'bg-[var(--border)]'}`} />
               )}
             </div>
           )

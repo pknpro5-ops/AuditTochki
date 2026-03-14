@@ -52,7 +52,16 @@ const defaultFormData: Partial<AuditFormValues> = {
   loadingZone: 'unknown',
 }
 
-const TOTAL_STEPS = 8 // 7 data steps + 1 review
+// 4 steps: 3 data + 1 review
+const TOTAL_STEPS = 4
+
+// Validation schemas for each merged step
+const stepValidationSchemas = [
+  [step1Schema, step3Schema],           // Step 0: Помещение = Basic + Construction
+  [step2Schema, step6Schema],           // Step 1: Инженерия = Engineering + Additional
+  [step4Schema, step5Schema, step7Schema], // Step 2: Концепция = Concept + Location + Accessibility
+  [],                                    // Step 3: Review
+]
 
 export function AuditForm() {
   const router = useRouter()
@@ -91,21 +100,25 @@ export function AuditForm() {
   }, [])
 
   const validateStep = (step: number): boolean => {
-    if (step >= 7) return true // review step
-    const schemas = [step1Schema, step2Schema, step3Schema, step4Schema, step5Schema, step6Schema, step7Schema]
-    const schema = schemas[step]
-    // Clean empty strings to undefined so Zod defaults kick in
+    if (step >= 3) return true // review step
+    const schemas = stepValidationSchemas[step]
+
     const cleanData = Object.fromEntries(
       Object.entries(formData as Record<string, unknown>).map(([k, v]) => [k, v === '' ? undefined : v])
     )
-    const result = schema.safeParse(cleanData)
 
-    if (!result.success) {
-      const newErrors: Record<string, string> = {}
-      for (const issue of result.error.issues) {
-        const field = issue.path[0]?.toString()
-        if (field) newErrors[field] = issue.message
+    const newErrors: Record<string, string> = {}
+    for (const schema of schemas) {
+      const result = schema.safeParse(cleanData)
+      if (!result.success) {
+        for (const issue of result.error.issues) {
+          const field = issue.path[0]?.toString()
+          if (field) newErrors[field] = issue.message
+        }
       }
+    }
+
+    if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
       scrollToFirstError()
       return false
@@ -182,15 +195,6 @@ export function AuditForm() {
     }
   }
 
-  // Count filled required fields for current step
-  const requiredStep1 = ['venueType', 'area', 'floor', 'buildingType', 'ceilingHeight', 'kitchenType', 'seatingCapacity']
-  const filledCount = currentStep === 0
-    ? requiredStep1.filter(f => {
-        const v = (formData as Record<string, unknown>)[f]
-        return v !== undefined && v !== null && v !== ''
-      }).length
-    : 0
-
   return (
     <div className="max-w-2xl mx-auto">
       <FormProgress
@@ -198,21 +202,6 @@ export function AuditForm() {
         onStepClick={handleStepClick}
         completedSteps={completedSteps}
       />
-
-      {/* Field progress for step 1 */}
-      {currentStep === 0 && (
-        <div className="mb-4 flex items-center gap-2">
-          <div className="flex-1 h-1.5 bg-[var(--muted)] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[var(--primary)] rounded-full transition-all duration-300"
-              style={{ width: `${(filledCount / requiredStep1.length) * 100}%` }}
-            />
-          </div>
-          <span className="text-xs text-[var(--muted-foreground)] shrink-0">
-            {filledCount}/{requiredStep1.length} обязательных
-          </span>
-        </div>
-      )}
 
       {submitError && (
         <div className="mb-4 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl flex items-start gap-3 animate-scale-in">
@@ -234,47 +223,78 @@ export function AuditForm() {
 
       <div ref={formRef} className="bg-[var(--background)] border border-[var(--border)] rounded-xl p-6 md:p-8 shadow-sm">
         <div key={currentStep} className={slideDir === 'left' ? 'animate-slide-in-left' : 'animate-slide-in-right'}>
+          {/* Step 0: Помещение = Basic + Construction */}
           {currentStep === 0 && (
-            <StepBasicParams data={formData} onChange={handleChange} errors={errors} />
+            <div className="space-y-8">
+              <StepBasicParams data={formData} onChange={handleChange} errors={errors} />
+              <div className="border-t border-[var(--border)] pt-6">
+                <h3 className="text-lg font-semibold mb-1">Конструктив здания</h3>
+                <p className="text-sm text-[var(--muted-foreground)] mb-4">Характеристики здания и входной группы</p>
+                <StepConstruction data={formData} onChange={handleChange} errors={errors} />
+              </div>
+            </div>
           )}
+
+          {/* Step 1: Инженерные системы = Engineering + Additional */}
           {currentStep === 1 && (
-            <StepEngineering data={formData} onChange={handleChange} errors={errors} />
+            <div className="space-y-8">
+              <StepEngineering data={formData} onChange={handleChange} errors={errors} />
+              <div className="border-t border-[var(--border)] pt-6">
+                <h3 className="text-lg font-semibold mb-1">Дополнительно</h3>
+                <p className="text-sm text-[var(--muted-foreground)] mb-4">Кондиционирование, санузлы, интернет</p>
+                <StepAdditionalEngineering data={formData} onChange={handleChange} errors={errors} />
+              </div>
+            </div>
           )}
+
+          {/* Step 2: Концепция и расположение = Concept + Location + Accessibility */}
           {currentStep === 2 && (
-            <StepConstruction data={formData} onChange={handleChange} errors={errors} />
+            <div className="space-y-8">
+              <StepConceptLegal
+                data={formData}
+                onChange={handleChange}
+                errors={errors}
+                onFileChange={setFloorPlanFile}
+                uploadedFileName={floorPlanFile?.name || null}
+              />
+              <div className="border-t border-[var(--border)] pt-6">
+                <h3 className="text-lg font-semibold mb-1">Расположение</h3>
+                <p className="text-sm text-[var(--muted-foreground)] mb-4">Адрес и текущее состояние помещения</p>
+                <StepLocation data={formData} onChange={handleChange} errors={errors} />
+              </div>
+              <div className="border-t border-[var(--border)] pt-6">
+                <h3 className="text-lg font-semibold mb-1">Доступность и логистика</h3>
+                <p className="text-sm text-[var(--muted-foreground)] mb-4">Парковка, доступная среда, разгрузка</p>
+                <StepAccessibility data={formData} onChange={handleChange} errors={errors} />
+              </div>
+            </div>
           )}
+
+          {/* Step 3: Review */}
           {currentStep === 3 && (
-            <StepConceptLegal
-              data={formData}
-              onChange={handleChange}
-              errors={errors}
-              onFileChange={setFloorPlanFile}
-              uploadedFileName={floorPlanFile?.name || null}
-            />
-          )}
-          {currentStep === 4 && (
-            <StepLocation data={formData} onChange={handleChange} errors={errors} />
-          )}
-          {currentStep === 5 && (
-            <StepAdditionalEngineering data={formData} onChange={handleChange} errors={errors} />
-          )}
-          {currentStep === 6 && (
-            <StepAccessibility data={formData} onChange={handleChange} errors={errors} />
-          )}
-          {currentStep === 7 && (
             <StepReview
               data={formData}
               uploadedFileName={floorPlanFile?.name || null}
               onEditStep={(step) => {
+                // Map old step indices to new merged steps
+                const stepMapping: Record<number, number> = {
+                  0: 0, // Basic → Помещение
+                  1: 1, // Engineering → Инженерия
+                  2: 0, // Construction → Помещение
+                  3: 2, // Concept → Концепция
+                  4: 2, // Location → Концепция
+                  5: 1, // Additional → Инженерия
+                  6: 2, // Accessibility → Концепция
+                }
                 setSlideDir('right')
-                setCurrentStep(step)
+                setCurrentStep(stepMapping[step] ?? 0)
               }}
             />
           )}
         </div>
 
         {/* Consent checkbox on review step */}
-        {currentStep === 7 && (
+        {currentStep === 3 && (
           <div className="mt-6 pt-4 border-t border-[var(--border)]">
             <label className="flex items-start gap-3 cursor-pointer group">
               <input
@@ -307,14 +327,14 @@ export function AuditForm() {
             Назад
           </button>
 
-          {currentStep < 6 ? (
+          {currentStep < 2 ? (
             <button
               onClick={handleNext}
               className="px-6 py-2.5 text-sm font-medium rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] hover:brightness-110 transition-all shadow-md shadow-[var(--primary)]/20"
             >
               Далее
             </button>
-          ) : currentStep === 6 ? (
+          ) : currentStep === 2 ? (
             <button
               onClick={handleNext}
               className="px-6 py-2.5 text-sm font-medium rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] hover:brightness-110 transition-all shadow-md shadow-[var(--primary)]/20"

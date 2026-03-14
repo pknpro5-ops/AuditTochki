@@ -16,9 +16,6 @@ interface StepProps {
 export function StepConstruction({ data, onChange, errors }: StepProps) {
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Блок 3. Конструктивные особенности</h2>
-      <p className="text-sm text-[var(--muted-foreground)]">Информация о здании и соседях</p>
-
       <FieldTooltip label="Соседи сверху" tooltip="Жилые сверху — ограничения по шуму, запрет вывода вытяжки через перекрытие, сложнее получить СЭС">
         <select
           value={data.neighborsAbove || 'residential'}
