@@ -85,6 +85,82 @@ async function callGeminiModel(
   return text
 }
 
+// OpenRouter fallback — OpenAI-compatible API
+const OPENROUTER_MODELS = [
+  'google/gemini-2.5-flash',
+  'google/gemini-2.0-flash-001',
+  'google/gemini-2.0-flash-lite-001',
+]
+
+async function callOpenRouter(
+  systemPrompt: string,
+  userPrompt: string,
+  apiKey: string,
+  imageBase64?: string,
+  imageMimeType?: string
+): Promise<string> {
+  for (const model of OPENROUTER_MODELS) {
+    try {
+      console.log(`Trying OpenRouter model: ${model}`)
+
+      const messages: Array<Record<string, unknown>> = [
+        { role: 'system', content: systemPrompt },
+      ]
+
+      // Build user message content
+      if (imageBase64 && imageMimeType) {
+        messages.push({
+          role: 'user',
+          content: [
+            { type: 'image_url', image_url: { url: `data:${imageMimeType};base64,${imageBase64}` } },
+            { type: 'text', text: userPrompt },
+          ],
+        })
+      } else {
+        messages.push({ role: 'user', content: userPrompt })
+      }
+
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': 'https://audittochki.ru',
+          'X-Title': 'AuditTochki',
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: 0,
+          max_tokens: 8192,
+          response_format: { type: 'json_object' },
+        }),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`OpenRouter API error ${response.status} (${model}): ${errorText.slice(0, 200)}`)
+      }
+
+      const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> }
+      const text = data.choices?.[0]?.message?.content
+
+      if (!text) {
+        throw new Error(`No response from OpenRouter (${model})`)
+      }
+
+      console.log(`Success with OpenRouter model: ${model}`)
+      return text
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error))
+      console.warn(`OpenRouter ${model} failed: ${err.message.slice(0, 100)}`)
+      continue
+    }
+  }
+
+  throw new Error('All OpenRouter models failed')
+}
+
 async function callGemini(
   systemPrompt: string,
   userPrompt: string,
@@ -92,31 +168,43 @@ async function callGemini(
   imageMimeType?: string
 ): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY not configured')
+  const openRouterKey = process.env.OPENROUTER_API_KEY
+
+  if (!apiKey && !openRouterKey) {
+    throw new Error('Neither GEMINI_API_KEY nor OPENROUTER_API_KEY configured')
   }
 
-  // Try each model in the fallback chain
   let lastError: Error | null = null
 
-  for (const model of GEMINI_MODELS) {
+  // 1. Try Gemini direct API first
+  if (apiKey) {
+    for (const model of GEMINI_MODELS) {
+      try {
+        console.log(`Trying Gemini model: ${model}`)
+        const result = await callGeminiModel(model, systemPrompt, userPrompt, apiKey, imageBase64, imageMimeType)
+        console.log(`Success with model: ${model}`)
+        return result
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error))
+        const is429 = lastError.message.includes('429')
+        console.warn(`Model ${model} failed${is429 ? ' (quota exceeded)' : ''}: ${lastError.message.slice(0, 100)}`)
+        continue
+      }
+    }
+    console.warn('All Gemini direct models failed, trying OpenRouter fallback...')
+  }
+
+  // 2. Fallback to OpenRouter
+  if (openRouterKey) {
     try {
-      console.log(`Trying Gemini model: ${model}`)
-      const result = await callGeminiModel(model, systemPrompt, userPrompt, apiKey, imageBase64, imageMimeType)
-      console.log(`Success with model: ${model}`)
-      return result
+      return await callOpenRouter(systemPrompt, userPrompt, openRouterKey, imageBase64, imageMimeType)
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
-      const is429 = lastError.message.includes('429')
-      console.warn(`Model ${model} failed${is429 ? ' (quota exceeded)' : ''}: ${lastError.message.slice(0, 100)}`)
-
-      // If it's a quota error (429), try next model immediately
-      // For other errors, also try next model
-      continue
+      console.error('OpenRouter fallback also failed:', lastError.message.slice(0, 200))
     }
   }
 
-  throw lastError || new Error('All Gemini models failed')
+  throw lastError || new Error('All AI models failed')
 }
 
 export async function analyzeWithGemini(
