@@ -1,13 +1,26 @@
 import { readFile } from 'fs/promises'
 
-// Fallback chain: try models in order until one works
-// Fallback chain: try models in order until one works
-// Correct model names from ListModels API
-const GEMINI_MODELS = [
-  'gemini-3-flash-preview',
+// === Model chains separated by use case ===
+
+// AUDIT models: reliability-first (structured JSON output, complex analysis)
+// gemini-2.5-flash is best for structured JSON; preview models are unstable
+const AUDIT_GEMINI_MODELS = [
   'gemini-2.5-flash',
+  'gemini-2.0-flash',
+]
+const AUDIT_OPENROUTER_MODELS = [
+  'google/gemini-2.5-flash',
+  'google/gemini-2.0-flash-001',
+]
+
+// CHAT models: cost-first (plain text, short conversational replies)
+const CHAT_GEMINI_MODELS = [
   'gemini-2.0-flash-lite',
   'gemini-2.0-flash',
+]
+const CHAT_OPENROUTER_MODELS = [
+  'google/gemini-2.0-flash-lite-001',
+  'google/gemini-2.0-flash-001',
 ]
 
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
@@ -97,9 +110,10 @@ async function callOpenRouter(
   userPrompt: string,
   apiKey: string,
   imageBase64?: string,
-  imageMimeType?: string
+  imageMimeType?: string,
+  models: string[] = AUDIT_OPENROUTER_MODELS
 ): Promise<string> {
-  for (const model of OPENROUTER_MODELS) {
+  for (const model of models) {
     try {
       console.log(`Trying OpenRouter model: ${model}`)
 
@@ -165,7 +179,9 @@ async function callGemini(
   systemPrompt: string,
   userPrompt: string,
   imageBase64?: string,
-  imageMimeType?: string
+  imageMimeType?: string,
+  geminiModels: string[] = AUDIT_GEMINI_MODELS,
+  openRouterModels: string[] = AUDIT_OPENROUTER_MODELS
 ): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY
   const openRouterKey = process.env.OPENROUTER_API_KEY
@@ -178,7 +194,7 @@ async function callGemini(
 
   // 1. Try Gemini direct API first
   if (apiKey) {
-    for (const model of GEMINI_MODELS) {
+    for (const model of geminiModels) {
       try {
         console.log(`Trying Gemini model: ${model}`)
         const result = await callGeminiModel(model, systemPrompt, userPrompt, apiKey, imageBase64, imageMimeType)
@@ -197,7 +213,7 @@ async function callGemini(
   // 2. Fallback to OpenRouter
   if (openRouterKey) {
     try {
-      return await callOpenRouter(systemPrompt, userPrompt, openRouterKey, imageBase64, imageMimeType)
+      return await callOpenRouter(systemPrompt, userPrompt, openRouterKey, imageBase64, imageMimeType, openRouterModels)
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
       console.error('OpenRouter fallback also failed:', lastError.message.slice(0, 200))
@@ -270,9 +286,10 @@ async function callGeminiChat(
 async function callOpenRouterChat(
   systemPrompt: string,
   messages: ChatMessage[],
-  apiKey: string
+  apiKey: string,
+  models: string[] = CHAT_OPENROUTER_MODELS
 ): Promise<string> {
-  for (const model of OPENROUTER_MODELS) {
+  for (const model of models) {
     try {
       const orMessages: Array<Record<string, unknown>> = [
         { role: 'system', content: systemPrompt },
@@ -334,9 +351,9 @@ export async function chatWithGemini(
 
   let lastError: Error | null = null
 
-  // 1. Try Gemini direct API
+  // 1. Try Gemini direct API (cheap chat models)
   if (apiKey) {
-    for (const model of GEMINI_MODELS) {
+    for (const model of CHAT_GEMINI_MODELS) {
       try {
         return await callGeminiChat(model, systemPrompt, messages, apiKey)
       } catch (error) {
@@ -346,10 +363,10 @@ export async function chatWithGemini(
     }
   }
 
-  // 2. Fallback to OpenRouter
+  // 2. Fallback to OpenRouter (cheap chat models)
   if (openRouterKey) {
     try {
-      return await callOpenRouterChat(systemPrompt, messages, openRouterKey)
+      return await callOpenRouterChat(systemPrompt, messages, openRouterKey, CHAT_OPENROUTER_MODELS)
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
     }
