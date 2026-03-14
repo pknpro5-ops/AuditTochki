@@ -107,7 +107,18 @@ export default function HomePage() {
                   Тарифы
                 </Link>
               </div>
-              <div className="animate-fade-in-up delay-400 mt-4 flex flex-wrap items-center gap-3 justify-center lg:justify-start text-sm text-[var(--muted-foreground)]">
+              <div className="animate-fade-in-up delay-350 mt-4 flex justify-center lg:justify-start">
+                <a
+                  href="/example-report.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-[var(--primary)] hover:underline font-medium"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                  Посмотреть пример отчёта (PDF)
+                </a>
+              </div>
+              <div className="animate-fade-in-up delay-400 mt-3 flex flex-wrap items-center gap-3 justify-center lg:justify-start text-sm text-[var(--muted-foreground)]">
                 <span className="flex items-center gap-1.5">
                   <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
                   Без регистрации
@@ -313,10 +324,20 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-          <div className="mt-6">
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link href="/pricing" className="text-sm text-[var(--primary)] hover:underline font-medium">
               Подробное сравнение тарифов &rarr;
             </Link>
+            <span className="hidden sm:inline text-[var(--border)]">|</span>
+            <a
+              href="/example-report.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-[var(--muted-foreground)] hover:text-[var(--primary)] hover:underline font-medium transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Пример отчёта PDF
+            </a>
           </div>
         </div>
       </section>
