@@ -3,7 +3,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 
 export const metadata = {
   title: 'Тарифы — АудитТочки',
-  description: 'Тарифы проверки помещения для общепита: бесплатный, стандарт (3 900 руб) и расширенный (7 900 руб).',
+  description: 'Тарифы проверки помещения для общепита: бесплатный, стандарт (1 900 руб) и расширенный (3 900 руб). Акция запуска!',
   alternates: {
     canonical: '/pricing',
   },
@@ -14,6 +14,7 @@ const tiers = [
     id: 'FREE',
     name: 'Бесплатно',
     price: '0 ₽',
+    oldPrice: null as string | null,
     description: 'Быстрая проверка для первого знакомства',
     features: [
       'Краткий вердикт GO / NO-GO',
@@ -29,7 +30,8 @@ const tiers = [
   {
     id: 'STANDARD',
     name: 'Стандарт',
-    price: '3 900 ₽',
+    price: '1 900 ₽',
+    oldPrice: '3 900 ₽',
     description: 'Полный анализ для принятия решения',
     features: [
       'Полный анализ по 6 блокам',
@@ -48,7 +50,8 @@ const tiers = [
   {
     id: 'EXTENDED',
     name: 'Расширенный',
-    price: '7 900 ₽',
+    price: '3 900 ₽',
+    oldPrice: '7 900 ₽',
     description: 'Максимум информации для опытных',
     features: [
       'Всё из тарифа Стандарт',
@@ -94,8 +97,18 @@ export default function PricingPage() {
               )}
               <h2 className="text-xl font-bold">{tier.name}</h2>
               <p className="text-sm text-[var(--muted-foreground)] mt-1">{tier.description}</p>
-              <div className="text-4xl font-bold mt-4">{tier.price}</div>
-              <p className="text-xs text-[var(--muted-foreground)]">за одну проверку</p>
+              <div className="mt-4">
+                {tier.oldPrice && (
+                  <div className="text-lg text-[var(--muted-foreground)] line-through">{tier.oldPrice}</div>
+                )}
+                <div className="text-4xl font-bold">{tier.price}</div>
+                {tier.oldPrice && (
+                  <div className="mt-1 inline-block text-xs font-medium text-green-600 dark:text-green-400 bg-green-500/10 rounded-full px-3 py-0.5">
+                    Цена запуска
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-[var(--muted-foreground)] mt-1">за одну проверку</p>
 
               <ul className="mt-6 space-y-2 flex-1">
                 {tier.features.map((f) => (

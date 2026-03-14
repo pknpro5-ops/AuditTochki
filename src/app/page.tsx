@@ -12,27 +12,27 @@ const analysisBlocks = [
 ]
 
 const stats = [
-  { value: '1 200+', label: 'проверок проведено' },
-  { value: '340+', label: 'помещений одобрено' },
+  { value: '14 лет', label: 'опыта команды hot-plan.ru' },
+  { value: '500+', label: 'реальных проектов общепита' },
   { value: '< 2 мин', label: 'среднее время анализа' },
   { value: '6', label: 'блоков нормативов' },
 ]
 
-const testimonials = [
+const advantages = [
   {
-    text: 'Сэкономили 3 недели и 120 000 ₽ — два помещения отсеяли ещё до выезда инженера.',
-    author: 'Алексей М.',
-    role: 'Управляющий сети кофеен',
+    icon: '🔒',
+    title: 'Без регистрации',
+    desc: 'Заполните форму и получите результат. Никаких аккаунтов, паролей и подписок.',
   },
   {
-    text: 'Отчёт показал критические проблемы с вентиляцией, которые арендодатель скрывал. Спасибо!',
-    author: 'Екатерина В.',
-    role: 'Ресторатор',
+    icon: '⚡',
+    title: 'Результат за 2 минуты',
+    desc: 'AI проверяет помещение по 6 блокам нормативов — быстрее, чем ожидание обратного звонка.',
   },
   {
-    text: 'Используем для каждого нового объекта. Быстрее и дешевле, чем вызывать проектировщика на этапе подбора.',
-    author: 'Дмитрий К.',
-    role: 'Коммерческий брокер',
+    icon: '📋',
+    title: 'Основано на реальном опыте',
+    desc: 'Алгоритм построен на базе 500+ реализованных проектов команды hot-plan.ru.',
   },
 ]
 
@@ -74,8 +74,10 @@ export default function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left: text */}
             <div className="text-center lg:text-left">
-              <div className="animate-fade-in-up inline-block px-4 py-1.5 mb-6 text-sm font-medium bg-[var(--primary)]/10 text-[var(--primary)] rounded-full border border-[var(--primary)]/20">
-                AI-аудит за 2 минуты
+              <div className="animate-fade-in-up inline-flex items-center gap-2 px-4 py-1.5 mb-6 text-sm font-medium bg-[var(--primary)]/10 text-[var(--primary)] rounded-full border border-[var(--primary)]/20">
+                <span>Сервис от команды</span>
+                <a href="https://hot-plan.ru" target="_blank" rel="noopener noreferrer" className="font-bold underline decoration-dotted hover:decoration-solid">hot-plan.ru</a>
+                <span>• 14 лет в проектировании общепита</span>
               </div>
               <h1 className="animate-fade-in-up delay-100 text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight tracking-tight">
                 Проверьте помещение для{' '}
@@ -105,9 +107,20 @@ export default function HomePage() {
                   Тарифы
                 </Link>
               </div>
-              <p className="animate-fade-in-up delay-400 mt-4 text-sm text-[var(--muted-foreground)]">
-                Бесплатно — краткий вердикт. Без регистрации.
-              </p>
+              <div className="animate-fade-in-up delay-400 mt-4 flex flex-wrap items-center gap-3 justify-center lg:justify-start text-sm text-[var(--muted-foreground)]">
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+                  Без регистрации
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+                  Анонимно
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+                  Бесплатный вердикт
+                </span>
+              </div>
             </div>
 
             {/* Right: report mockup */}
@@ -201,18 +214,13 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Testimonials */}
+          {/* Advantages */}
           <div className="scroll-animate grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((t) => (
-              <div key={t.author} className="card-hover p-6 rounded-xl border border-[var(--border)] relative">
-                <svg className="w-8 h-8 text-[var(--primary)]/20 absolute top-4 right-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
-                </svg>
-                <p className="text-sm leading-relaxed mb-4 relative z-10">{t.text}</p>
-                <div className="border-t border-[var(--border)] pt-3">
-                  <div className="font-semibold text-sm">{t.author}</div>
-                  <div className="text-xs text-[var(--muted-foreground)]">{t.role}</div>
-                </div>
+            {advantages.map((a) => (
+              <div key={a.title} className="card-hover p-6 rounded-xl border border-[var(--border)]">
+                <div className="text-3xl mb-3">{a.icon}</div>
+                <h3 className="font-semibold text-sm mb-2">{a.title}</h3>
+                <p className="text-sm text-[var(--muted-foreground)] leading-relaxed">{a.desc}</p>
               </div>
             ))}
           </div>
@@ -253,9 +261,9 @@ export default function HomePage() {
           </p>
           <div className="scroll-animate grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
             {[
-              { name: 'Бесплатно', price: '0 ₽', saving: null, features: ['Краткий вердикт', '3 проверки', 'Без PDF'], cta: 'Попробовать', highlight: false },
-              { name: 'Стандарт', price: '3 900 ₽', saving: 'В 5 раз дешевле выезда', features: ['Полный анализ 6 блоков', 'PDF-отчёт', 'Оценка бюджета', 'Топ-3 риска'], cta: 'Выбрать', highlight: true },
-              { name: 'Расширенный', price: '7 900 ₽', saving: 'Включает анализ плана', features: ['Всё из Стандарт', 'Анализ плана помещения', 'Рекомендации по ТЗ', 'Детальный бюджет'], cta: 'Выбрать', highlight: false },
+              { name: 'Бесплатно', price: '0 ₽', oldPrice: null, saving: null, features: ['Краткий вердикт', '3 проверки', 'Без PDF'], cta: 'Попробовать', highlight: false },
+              { name: 'Стандарт', price: '1 900 ₽', oldPrice: '3 900 ₽', saving: 'Цена запуска — скоро 3 900 ₽', features: ['Полный анализ 6 блоков', 'PDF-отчёт', 'Оценка бюджета', 'Топ-3 риска'], cta: 'Выбрать', highlight: true },
+              { name: 'Расширенный', price: '3 900 ₽', oldPrice: '7 900 ₽', saving: 'Цена запуска — скоро 7 900 ₽', features: ['Всё из Стандарт', 'Анализ плана помещения', 'Рекомендации по ТЗ', 'Детальный бюджет'], cta: 'Выбрать', highlight: false },
             ].map((tier) => (
               <div
                 key={tier.name}
@@ -271,7 +279,12 @@ export default function HomePage() {
                   </div>
                 )}
                 <h3 className="font-semibold text-lg">{tier.name}</h3>
-                <div className="text-3xl font-bold my-4">{tier.price}</div>
+                <div className="my-4">
+                  {tier.oldPrice && (
+                    <div className="text-lg text-[var(--muted-foreground)] line-through">{tier.oldPrice}</div>
+                  )}
+                  <div className="text-3xl font-bold">{tier.price}</div>
+                </div>
                 {tier.saving && (
                   <div className="text-xs font-medium text-green-600 dark:text-green-400 bg-green-500/10 rounded-full px-3 py-1 mb-4 inline-block mx-auto">
                     {tier.saving}
