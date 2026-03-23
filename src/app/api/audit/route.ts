@@ -8,16 +8,6 @@ import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   try {
-    // Rate limiting
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-    const rateLimit = checkRateLimit(`audit:${ip}`, RATE_LIMITS.audit)
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        { error: 'Слишком много запросов. Попробуйте через минуту.' },
-        { status: 429 }
-      )
-    }
-
     const body = await req.json()
     const { formData, floorPlanPath, floorPlanName } = body
 
@@ -33,6 +23,18 @@ export async function POST(req: NextRequest) {
     const sessionId = await getSessionId()
     const user = await getCurrentUser()
     const isAdmin = user?.role === 'ADMIN'
+
+    // Rate limiting (skip for admin)
+    if (!isAdmin) {
+      const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+      const rateLimit = checkRateLimit(`audit:${ip}`, RATE_LIMITS.audit)
+      if (!rateLimit.allowed) {
+        return NextResponse.json(
+          { error: 'Слишком много запросов. Попробуйте через минуту.' },
+          { status: 429 }
+        )
+      }
+    }
 
     // Check free usage limit (skip for admin)
     if (!isAdmin) {
@@ -64,7 +66,7 @@ export async function POST(req: NextRequest) {
           ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
           : null,
         status: 'PROCESSING_AI',
-        tier: 'FREE',
+        tier: isAdmin ? 'EXTENDED' : 'FREE',
         sessionId,
         userId: user?.userId ?? null,
         analysisStartedAt: new Date(),

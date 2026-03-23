@@ -2,20 +2,26 @@ import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
 import { chatWithGemini, type ChatMessage } from '@/lib/ai/gemini'
 import { buildChatSystemPrompt } from '@/lib/ai/prompts/chat-prompt'
+import { getCurrentUser } from '@/lib/auth'
 
 const MAX_MESSAGES = 20
 const MAX_MESSAGE_LENGTH = 500
 
 export async function POST(req: NextRequest) {
   try {
-    // Rate limiting
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-    const rateLimit = checkRateLimit(`chat:${ip}`, RATE_LIMITS.chat)
-    if (!rateLimit.allowed) {
-      return NextResponse.json(
-        { error: 'Слишком много сообщений. Подождите немного.' },
-        { status: 429 }
-      )
+    const user = await getCurrentUser()
+    const isAdmin = user?.role === 'ADMIN'
+
+    // Rate limiting (skip for admin)
+    if (!isAdmin) {
+      const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+      const rateLimit = checkRateLimit(`chat:${ip}`, RATE_LIMITS.chat)
+      if (!rateLimit.allowed) {
+        return NextResponse.json(
+          { error: 'Слишком много сообщений. Подождите немного.' },
+          { status: 429 }
+        )
+      }
     }
 
     const body = await req.json()
