@@ -21,6 +21,7 @@ jobs:
             npm ci --production=false
             npx prisma generate
             npx prisma db push
+            npx prisma db seed
             npm run build
             sudo systemctl restart audittochki
             echo "Deploy complete: $(date)"
