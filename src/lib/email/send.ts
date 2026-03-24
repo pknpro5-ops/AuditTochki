@@ -28,7 +28,7 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
     body: {
       html: params.html,
     },
-    skip_unsubscribe: 1, // транзакционное письмо — без ссылки "отписаться"
+    // skip_unsubscribe требует специального флага на аккаунте
   }
 
   if (params.attachments && params.attachments.length > 0) {
