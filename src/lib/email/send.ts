@@ -1,4 +1,5 @@
-const RESEND_API_URL = 'https://api.resend.com/emails'
+// Unisender Go API — серверы в РФ, соответствие ФЗ-152
+const UNISENDER_API_URL = 'https://goapi.unisender.ru/ru/transactional/api/v1/email/send.json'
 
 interface SendEmailParams {
   to: string
@@ -12,38 +13,52 @@ interface SendEmailParams {
 }
 
 export async function sendEmail(params: SendEmailParams): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY
+  const apiKey = process.env.UNISENDER_API_KEY
+  const fromEmail = process.env.UNISENDER_FROM_EMAIL || 'noreply@audittochki.ru'
 
   if (!apiKey) {
-    throw new Error('RESEND_API_KEY не настроен')
+    throw new Error('UNISENDER_API_KEY не настроен')
   }
 
-  const body: Record<string, unknown> = {
-    from: 'АудитТочки <onboarding@resend.dev>',
-    to: [params.to],
+  const message: Record<string, unknown> = {
+    recipients: [{ email: params.to }],
     subject: params.subject,
-    html: params.html,
+    from_email: fromEmail,
+    from_name: 'АудитТочки',
+    body: {
+      html: params.html,
+    },
+    skip_unsubscribe: 1, // транзакционное письмо — без ссылки "отписаться"
   }
 
   if (params.attachments && params.attachments.length > 0) {
-    body.attachments = params.attachments.map((a) => ({
+    message.attachments = params.attachments.map((a) => ({
+      type: a.type,
+      name: a.filename.replace(/\//g, '-'), // "/" запрещены в именах
       content: a.content,
-      filename: a.filename,
     }))
   }
 
-  const response = await fetch(RESEND_API_URL, {
+  const response = await fetch(UNISENDER_API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
+      'Accept': 'application/json',
+      'X-API-KEY': apiKey,
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ message }),
   })
 
   if (!response.ok) {
     const errorText = await response.text()
-    throw new Error(`Resend error ${response.status}: ${errorText}`)
+    throw new Error(`Unisender error ${response.status}: ${errorText}`)
+  }
+
+  const data = await response.json() as { status?: string; failed_emails?: Record<string, string> }
+
+  if (data.failed_emails && Object.keys(data.failed_emails).length > 0) {
+    const reasons = Object.values(data.failed_emails).join(', ')
+    throw new Error(`Unisender: письмо не доставлено — ${reasons}`)
   }
 }
 
