@@ -1,4 +1,4 @@
-const SENDGRID_API_URL = 'https://api.sendgrid.com/v3/mail/send'
+const RESEND_API_URL = 'https://api.resend.com/emails'
 
 interface SendEmailParams {
   to: string
@@ -12,37 +12,27 @@ interface SendEmailParams {
 }
 
 export async function sendEmail(params: SendEmailParams): Promise<void> {
-  const apiKey = process.env.SENDGRID_API_KEY
-  const fromEmail = process.env.SENDGRID_FROM_EMAIL
+  const apiKey = process.env.RESEND_API_KEY
 
-  if (!apiKey || !fromEmail) {
-    throw new Error('SendGrid not configured (SENDGRID_API_KEY, SENDGRID_FROM_EMAIL)')
+  if (!apiKey) {
+    throw new Error('RESEND_API_KEY не настроен')
   }
 
   const body: Record<string, unknown> = {
-    personalizations: [
-      {
-        to: [{ email: params.to }],
-      },
-    ],
-    from: {
-      email: fromEmail,
-      name: 'АудитТочки',
-    },
+    from: 'АудитТочки <onboarding@resend.dev>',
+    to: [params.to],
     subject: params.subject,
-    content: [
-      {
-        type: 'text/html',
-        value: params.html,
-      },
-    ],
+    html: params.html,
   }
 
   if (params.attachments && params.attachments.length > 0) {
-    body.attachments = params.attachments
+    body.attachments = params.attachments.map((a) => ({
+      content: a.content,
+      filename: a.filename,
+    }))
   }
 
-  const response = await fetch(SENDGRID_API_URL, {
+  const response = await fetch(RESEND_API_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -53,7 +43,7 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
 
   if (!response.ok) {
     const errorText = await response.text()
-    throw new Error(`SendGrid error ${response.status}: ${errorText}`)
+    throw new Error(`Resend error ${response.status}: ${errorText}`)
   }
 }
 
@@ -72,7 +62,7 @@ export function buildReportEmailHtml(auditId: string, verdict: string): string {
 
   const label = verdictLabels[verdict] || verdict
   const color = verdictColors[verdict] || '#6b7280'
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://audittochki.ru'
 
   return `
 <!DOCTYPE html>
