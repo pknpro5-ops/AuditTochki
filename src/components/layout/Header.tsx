@@ -47,6 +47,9 @@ export function Header() {
           <Link href="/compare" className="text-sm font-medium hover:text-[var(--primary)] transition-colors">
             Сравнить
           </Link>
+          <Link href="/history" className="text-sm font-medium hover:text-[var(--primary)] transition-colors">
+            Мои проверки
+          </Link>
 
           {user ? (
             <div className="flex items-center gap-3">
@@ -97,6 +100,9 @@ export function Header() {
           </Link>
           <Link href="/compare" className="block text-sm font-medium" onClick={() => setMenuOpen(false)}>
             Сравнить
+          </Link>
+          <Link href="/history" className="block text-sm font-medium" onClick={() => setMenuOpen(false)}>
+            Мои проверки
           </Link>
 
           {user ? (

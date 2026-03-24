@@ -48,6 +48,7 @@ export async function GET() {
         score: getEffectiveScore(report),
         budgetMin: report.budget?.min ?? 0,
         budgetMax: report.budget?.max ?? 0,
+        tier: audit.tier,
         blocks: report.blocks.map((b) => ({ id: b.id, title: b.title, status: b.status })),
         topRisks: report.top_risks.slice(0, 3),
         createdAt: audit.createdAt.toISOString(),
